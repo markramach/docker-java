@@ -1,5 +1,36 @@
 package com.github.dockerjava.netty;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelConfig;
+import io.netty.channel.ChannelFactory;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.DuplexChannel;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.unix.DomainSocketAddress;
+import io.netty.channel.unix.UnixChannel;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.DefaultThreadFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.security.Security;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import com.github.dockerjava.api.command.AttachContainerCmd;
 import com.github.dockerjava.api.command.AuthCmd;
 import com.github.dockerjava.api.command.BuildImageCmd;
@@ -26,6 +57,7 @@ import com.github.dockerjava.api.command.InspectNetworkCmd;
 import com.github.dockerjava.api.command.InspectVolumeCmd;
 import com.github.dockerjava.api.command.KillContainerCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImageHistoryCmd;
 import com.github.dockerjava.api.command.ListImagesCmd;
 import com.github.dockerjava.api.command.ListNetworksCmd;
 import com.github.dockerjava.api.command.ListVolumesCmd;
@@ -39,6 +71,7 @@ import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.RemoveNetworkCmd;
 import com.github.dockerjava.api.command.RemoveVolumeCmd;
+import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.api.command.RestartContainerCmd;
 import com.github.dockerjava.api.command.SaveImageCmd;
 import com.github.dockerjava.api.command.SearchImagesCmd;
@@ -51,7 +84,6 @@ import com.github.dockerjava.api.command.UnpauseContainerCmd;
 import com.github.dockerjava.api.command.UpdateContainerCmd;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
-import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.core.SSLConfig;
@@ -80,6 +112,7 @@ import com.github.dockerjava.netty.exec.InspectNetworkCmdExec;
 import com.github.dockerjava.netty.exec.InspectVolumeCmdExec;
 import com.github.dockerjava.netty.exec.KillContainerCmdExec;
 import com.github.dockerjava.netty.exec.ListContainersCmdExec;
+import com.github.dockerjava.netty.exec.ListImageHistoryCmdExec;
 import com.github.dockerjava.netty.exec.ListImagesCmdExec;
 import com.github.dockerjava.netty.exec.ListNetworksCmdExec;
 import com.github.dockerjava.netty.exec.ListVolumesCmdExec;
@@ -93,6 +126,7 @@ import com.github.dockerjava.netty.exec.RemoveContainerCmdExec;
 import com.github.dockerjava.netty.exec.RemoveImageCmdExec;
 import com.github.dockerjava.netty.exec.RemoveNetworkCmdExec;
 import com.github.dockerjava.netty.exec.RemoveVolumeCmdExec;
+import com.github.dockerjava.netty.exec.RenameContainerCmdExec;
 import com.github.dockerjava.netty.exec.RestartContainerCmdExec;
 import com.github.dockerjava.netty.exec.SaveImageCmdExec;
 import com.github.dockerjava.netty.exec.SearchImagesCmdExec;
@@ -105,39 +139,6 @@ import com.github.dockerjava.netty.exec.UnpauseContainerCmdExec;
 import com.github.dockerjava.netty.exec.UpdateContainerCmdExec;
 import com.github.dockerjava.netty.exec.VersionCmdExec;
 import com.github.dockerjava.netty.exec.WaitContainerCmdExec;
-import com.github.dockerjava.netty.exec.RenameContainerCmdExec;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelConfig;
-import io.netty.channel.ChannelFactory;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.DuplexChannel;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.channel.unix.DomainSocketAddress;
-import io.netty.channel.unix.UnixChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.DefaultThreadFactory;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.security.Security;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Experimental implementation of {@link DockerCmdExecFactory} that supports http connection hijacking that is needed to pass STDIN to the
@@ -595,6 +596,11 @@ public class NettyDockerCmdExecFactory implements DockerCmdExecFactory {
     @Override
     public DisconnectFromNetworkCmd.Exec createDisconnectFromNetworkCmdExec() {
         return new DisconnectFromNetworkCmdExec(getBaseResource(), getDockerClientConfig());
+    }
+
+    @Override
+    public ListImageHistoryCmd.Exec createListImageHistoryCmdExec() {
+        return new ListImageHistoryCmdExec(getBaseResource(), getDockerClientConfig());
     }
 
     @Override

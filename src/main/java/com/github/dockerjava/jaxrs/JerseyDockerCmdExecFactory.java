@@ -18,9 +18,6 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.client.ClientResponseFilter;
 import javax.ws.rs.client.WebTarget;
 
-import com.github.dockerjava.api.command.UpdateContainerCmd;
-import com.github.dockerjava.core.SSLConfig;
-
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -62,6 +59,7 @@ import com.github.dockerjava.api.command.InspectNetworkCmd;
 import com.github.dockerjava.api.command.InspectVolumeCmd;
 import com.github.dockerjava.api.command.KillContainerCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImageHistoryCmd;
 import com.github.dockerjava.api.command.ListImagesCmd;
 import com.github.dockerjava.api.command.ListNetworksCmd;
 import com.github.dockerjava.api.command.ListVolumesCmd;
@@ -75,6 +73,7 @@ import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.RemoveNetworkCmd;
 import com.github.dockerjava.api.command.RemoveVolumeCmd;
+import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.api.command.RestartContainerCmd;
 import com.github.dockerjava.api.command.SaveImageCmd;
 import com.github.dockerjava.api.command.SearchImagesCmd;
@@ -84,11 +83,12 @@ import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.command.TagImageCmd;
 import com.github.dockerjava.api.command.TopContainerCmd;
 import com.github.dockerjava.api.command.UnpauseContainerCmd;
+import com.github.dockerjava.api.command.UpdateContainerCmd;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
-import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.SSLConfig;
 import com.github.dockerjava.jaxrs.filter.JsonClientFilter;
 import com.github.dockerjava.jaxrs.filter.ResponseStatusExceptionFilter;
 import com.github.dockerjava.jaxrs.filter.SelectiveLoggingFilter;
@@ -548,6 +548,11 @@ public class JerseyDockerCmdExecFactory implements DockerCmdExecFactory {
     public DisconnectFromNetworkCmd.Exec createDisconnectFromNetworkCmdExec() {
 
         return new DisconnectFromNetworkCmdExec(getBaseResource(), getDockerClientConfig());
+    }
+
+    @Override
+    public ListImageHistoryCmd.Exec createListImageHistoryCmdExec() {
+        return new ListImageHistoryCmdExec(getBaseResource(), getDockerClientConfig());
     }
 
     @Override

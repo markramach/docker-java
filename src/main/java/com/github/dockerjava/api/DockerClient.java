@@ -32,6 +32,7 @@ import com.github.dockerjava.api.command.InspectNetworkCmd;
 import com.github.dockerjava.api.command.InspectVolumeCmd;
 import com.github.dockerjava.api.command.KillContainerCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.command.ListImageHistoryCmd;
 import com.github.dockerjava.api.command.ListImagesCmd;
 import com.github.dockerjava.api.command.ListNetworksCmd;
 import com.github.dockerjava.api.command.ListVolumesCmd;
@@ -45,6 +46,7 @@ import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.RemoveNetworkCmd;
 import com.github.dockerjava.api.command.RemoveVolumeCmd;
+import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.api.command.RestartContainerCmd;
 import com.github.dockerjava.api.command.SaveImageCmd;
 import com.github.dockerjava.api.command.SearchImagesCmd;
@@ -57,7 +59,6 @@ import com.github.dockerjava.api.command.UnpauseContainerCmd;
 import com.github.dockerjava.api.command.UpdateContainerCmd;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
-import com.github.dockerjava.api.command.RenameContainerCmd;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Identifier;
@@ -254,6 +255,8 @@ public interface DockerClient extends Closeable {
     ConnectToNetworkCmd connectToNetworkCmd();
 
     DisconnectFromNetworkCmd disconnectFromNetworkCmd();
+
+    ListImageHistoryCmd listImageHistoryCmd(@Nonnull String imageId);
 
     @Override
     void close() throws IOException;

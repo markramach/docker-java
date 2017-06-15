@@ -1,5 +1,10 @@
 package com.github.dockerjava.core;
 
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.AttachContainerCmd;
 import com.github.dockerjava.api.command.AuthCmd.Exec;
@@ -58,11 +63,6 @@ import com.github.dockerjava.api.command.UpdateContainerCmd;
 import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.model.BuildResponseItem;
-
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Special {@link DockerCmdExecFactory} implementation that collects container and image creations while test execution for the purpose of
@@ -349,6 +349,11 @@ public class TestDockerCmdExecFactory implements DockerCmdExecFactory {
     }
 
     @Override
+	public com.github.dockerjava.api.command.ListImageHistoryCmd.Exec createListImageHistoryCmdExec() {
+		return delegate.createListImageHistoryCmdExec();
+	}
+
+	@Override
     public CreateVolumeCmd.Exec createCreateVolumeCmdExec() {
         return new CreateVolumeCmd.Exec() {
             @Override

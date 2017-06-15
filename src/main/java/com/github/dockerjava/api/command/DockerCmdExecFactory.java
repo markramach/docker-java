@@ -117,6 +117,8 @@ public interface DockerCmdExecFactory extends Closeable {
 
     DisconnectFromNetworkCmd.Exec createDisconnectFromNetworkCmdExec();
 
+    ListImageHistoryCmd.Exec createListImageHistoryCmdExec();
+
     @Override
     void close() throws IOException;
 
